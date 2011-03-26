@@ -27,6 +27,13 @@ import org.apache.hadoop.util.ToolRunner;
  */
 public class FollowersCounter extends Configured implements Tool {
 
+
+	public enum Count {
+		RECORDS_SKIPPED,
+		TOTAL_KEYS,
+		UNIQUE_KEYS
+	}
+
 	public static class FollowersCounterMapper extends Mapper<LongWritable, Text, Text, LongWritable> {
 
 		// Our own made up key to send all counts to a single Reducer, so we can
@@ -36,11 +43,6 @@ public class FollowersCounter extends Configured implements Tool {
 		// Just to save on object instantiation
 		public static final LongWritable ONE_COUNT = new LongWritable(1);
 
-    	public enum Count {
-    		RECORDS_SKIPPED,
-    		TOTAL_KEYS,
-    		UNIQUE_KEYS
-    	}
 
 		@Override
 		@SuppressWarnings("unused")
@@ -71,12 +73,14 @@ public class FollowersCounter extends Configured implements Tool {
 				return;
 			}
 
+		    context.getCounter(Count.TOTAL_KEYS).increment(1);
 			context.write(new Text(userID), ONE_COUNT);
 		}
 	}
 	public static class FollowersCounterReducer extends Reducer<Text, LongWritable, Text, LongWritable> {
 
 		protected void reduce(Text key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
+			context.getCounter(Count.UNIQUE_KEYS).increment(1);
 			long count = 0;
 			for (LongWritable value : values) {
 				count += value.get();
