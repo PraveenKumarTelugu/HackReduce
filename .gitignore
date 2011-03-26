@@ -9,3 +9,5 @@
 /dist
 /junit
 /nbproject
+/output
+.DS_Store
