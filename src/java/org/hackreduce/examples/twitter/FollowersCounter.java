@@ -18,8 +18,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-// import org.hackreduce.models.FollowRecord;
-
 
 /**
  * This MapReduce job will count the total number of Bixi records in the data dump.
@@ -34,22 +32,14 @@ public class FollowersCounter extends Configured implements Tool {
 		UNIQUE_KEYS
 	}
 
-	public static class FollowersCounterMapper extends Mapper<LongWritable, Text, Text, LongWritable> {
-
-		// Our own made up key to send all counts to a single Reducer, so we can
-		// aggregate a total value.
-		public static final Text TOTAL_COUNT = new Text("total");
-
-		// Just to save on object instantiation
-		public static final LongWritable ONE_COUNT = new LongWritable(1);
-
+	public static class FollowersCounterMapper extends Mapper<LongWritable, Text, LongWritable, LongWritable> {
 
 		@Override
 		@SuppressWarnings("unused")
 		protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 			String inputString = value.toString();
-			String userID;
-			String followerID;
+			long userID;
+			long followerID;
 
 			try {
 				// This code is copied from the constructor of StockExchangeRecord
@@ -60,11 +50,8 @@ public class FollowersCounter extends Configured implements Tool {
 					throw new IllegalArgumentException("Input string given did not have 2 values in TSV format");
 
 				try {
-					userID     = attributes[0];
-					followerID = attributes[1];
-					
-//				} catch (ParseException e) {
-//					throw new IllegalArgumentException("Input string contained an unknown value that couldn't be parsed");
+					userID     = Integer.parseInt(attributes[0]);
+					followerID = Integer.parseInt(attributes[1]);
 				} catch (NumberFormatException e) {
 					throw new IllegalArgumentException("Input string contained an unknown number value that couldn't be parsed");
 				}
@@ -74,16 +61,17 @@ public class FollowersCounter extends Configured implements Tool {
 			}
 
 		    context.getCounter(Count.TOTAL_KEYS).increment(1);
-			context.write(new Text(userID), ONE_COUNT);
+			context.write(new LongWritable(userID), new LongWritable(followerID));
 		}
 	}
-	public static class FollowersCounterReducer extends Reducer<Text, LongWritable, Text, LongWritable> {
+	
+	public static class FollowersCounterReducer extends Reducer<LongWritable, LongWritable, LongWritable, LongWritable> {
 
-		protected void reduce(Text key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
+		protected void reduce(LongWritable key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
 			context.getCounter(Count.UNIQUE_KEYS).increment(1);
 			long count = 0;
 			for (LongWritable value : values) {
-				count += value.get();
+				count += 1; // value.get();
 			}
 			context.write(key, new LongWritable(count));
 		}
@@ -113,11 +101,11 @@ public class FollowersCounter extends Configured implements Tool {
 		job.setInputFormatClass(TextInputFormat.class);
 
 		// This is what the Mapper will be outputting to the Reducer
-		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(LongWritable.class);
 
         // // This is what the Reducer will be outputting
-        job.setOutputKeyClass(Text.class);
+        job.setOutputKeyClass(LongWritable.class);
         job.setOutputValueClass(LongWritable.class);
 
 		// Setting the input folder of the job 
