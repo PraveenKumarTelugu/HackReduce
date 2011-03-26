@@ -90,7 +90,7 @@ public class AddSocialGraphIdentifierColumn extends Configured implements Tool {
         // Creating the MapReduce job (configuration) object
         Job job = new Job(conf);
         job.setJarByClass(getClass());
-        job.setJobName("Very secret world domination project");
+        job.setJobName("World domination continues...");
 
         // Tell the job which Mapper and Reducer to use (classes defined above)
         job.setMapperClass(AddSocialGraphIdentifierColumnMapper.class);
