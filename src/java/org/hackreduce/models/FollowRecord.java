@@ -27,8 +27,8 @@ public class FollowRecord {
 		try {
 			setUserId(attributes[0]);
 			setFollowerId(attributes[1]);
-		} catch (ParseException e) {
-			throw new IllegalArgumentException("Input string contained an unknown value that couldn't be parsed");
+//		} catch (ParseException e) {
+//			throw new IllegalArgumentException("Input string contained an unknown value that couldn't be parsed");
 		} catch (NumberFormatException e) {
 			throw new IllegalArgumentException("Input string contained an unknown number value that couldn't be parsed");
 		}	
@@ -46,7 +46,7 @@ public class FollowRecord {
 		this.userId = userId;
 	}
 	
-	public String getfollowerId() {
+	public String getFollowerId() {
 		return followerId;
 	}
 	
