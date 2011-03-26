@@ -46,6 +46,8 @@ public class FollowersCounter extends Configured implements Tool {
 		@SuppressWarnings("unused")
 		protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 			String inputString = value.toString();
+			String userID;
+			String followerID;
 
 			try {
 				// This code is copied from the constructor of StockExchangeRecord
@@ -56,10 +58,8 @@ public class FollowersCounter extends Configured implements Tool {
 					throw new IllegalArgumentException("Input string given did not have 2 values in TSV format");
 
 				try {
-					String userID     = attributes[0];
-					String followerID = attributes[1];
-
-					System.out.println(userID);
+					userID     = attributes[0];
+					followerID = attributes[1];
 					
 //				} catch (ParseException e) {
 //					throw new IllegalArgumentException("Input string contained an unknown value that couldn't be parsed");
@@ -71,9 +71,19 @@ public class FollowersCounter extends Configured implements Tool {
 				return;
 			}
 
-			context.getCounter(Count.TOTAL_KEYS).increment(1);
-			context.write(TOTAL_COUNT, ONE_COUNT);
+			context.write(new Text(userID), ONE_COUNT);
 		}
+	}
+	public static class FollowersCounterReducer extends Reducer<Text, LongWritable, Text, LongWritable> {
+
+		protected void reduce(Text key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
+			long count = 0;
+			for (LongWritable value : values) {
+				count += value.get();
+			}
+			context.write(key, new LongWritable(count));
+		}
+
 	}
 
 	@Override
@@ -92,7 +102,7 @@ public class FollowersCounter extends Configured implements Tool {
 
         // Tell the job which Mapper and Reducer to use (classes defined above)
         job.setMapperClass(FollowersCounterMapper.class);
-		// job.setReducerClass(FollowersCounterReducer.class);
+		job.setReducerClass(FollowersCounterReducer.class);
 
 		// The Nasdaq/NYSE data dumps comes in as a CSV file (text input), so we configure
 		// the job to use this format.
@@ -103,8 +113,8 @@ public class FollowersCounter extends Configured implements Tool {
 		job.setMapOutputValueClass(LongWritable.class);
 
         // // This is what the Reducer will be outputting
-        // job.setOutputKeyClass(Text.class);
-        // job.setOutputValueClass(LongWritable.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(LongWritable.class);
 
 		// Setting the input folder of the job 
 		FileInputFormat.addInputPath(job, new Path(args[0]));
